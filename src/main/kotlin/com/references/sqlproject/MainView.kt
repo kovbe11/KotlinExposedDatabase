@@ -7,6 +7,12 @@ class DatabaseView : View("Database") {
 
     private val controller: DatabaseController by inject()
 
+
+    private var itemTable: TableViewEditModel<ItemModel> by singleAssign()
+    private var shopTable: TableViewEditModel<ShopModel> by singleAssign()
+    private var orderTable: TableViewEditModel<OrderModel> by singleAssign()
+    private var saleTable: TableViewEditModel<SaleModel> by singleAssign()
+
     override val root = vbox {
         menubar {
             menu("File") {
@@ -18,6 +24,38 @@ class DatabaseView : View("Database") {
                 }
                 item("export to csv")
             }
+            menu("Edit"){
+                menu("Commit.."){
+                    item("Items"){
+                        action {
+                            controller.commitDirtyItems(itemTable.items.asSequence())
+                        }
+                    }
+                    item("Shops"){
+                        action{
+                            controller.commitDirtyShops(shopTable.items.asSequence())
+                        }
+                    }
+                    item("Orders"){
+                        action{
+                            controller.commitDirtyOrders(orderTable.items.asSequence())
+                        }
+                    }
+                    item("Sales"){
+                        action{
+                            controller.commitDirtySales(saleTable.items.asSequence())
+                        }
+                    }
+                }
+                item("Rollback"){
+                    action{
+                        itemTable.rollback()
+                        shopTable.rollback()
+                        orderTable.rollback()
+                        saleTable.rollback()
+                    }
+                }
+            }
         }
         splitpane {
             setDividerPosition(0, 0.5)
@@ -26,8 +64,10 @@ class DatabaseView : View("Database") {
                     tabClosingPolicy = TabPane.TabClosingPolicy.UNAVAILABLE
 
                     tableview<ItemModel> {
-
                         items = controller.items
+                        itemTable = editModel
+
+
                         column("id", ItemModel::id)
                         column("ic", ItemModel::ic)
                         column("name", ItemModel::name)
@@ -40,6 +80,9 @@ class DatabaseView : View("Database") {
 
                     tableview<ShopModel> {
                         items = controller.shops
+                        shopTable = editModel
+
+
                         column("id", ShopModel::id)
                         column("name", ShopModel::name)
                         column("address", ShopModel::address)
@@ -55,6 +98,7 @@ class DatabaseView : View("Database") {
 
                     tableview<OrderModel> {
                         items = controller.orders
+                        orderTable = editModel
 
 
                         column("id", OrderModel::id)
@@ -70,6 +114,8 @@ class DatabaseView : View("Database") {
 
                     tableview<SaleModel> {
                         items = controller.sales
+                        saleTable = editModel
+
 
                         column("id", SaleModel::id)
                         column("itemId", SaleModel::itemId)
