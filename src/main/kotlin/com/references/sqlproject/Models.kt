@@ -3,6 +3,8 @@ package com.references.sqlproject
 import org.jetbrains.exposed.sql.transactions.transaction
 import tornadofx.ItemViewModel
 
+
+//tornadofx modellek
 class ItemModel : ItemViewModel<Item>() {
     val id = bind(Item::id)
     val ic = bind(Item::ic)

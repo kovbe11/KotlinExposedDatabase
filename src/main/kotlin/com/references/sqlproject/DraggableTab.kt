@@ -13,6 +13,10 @@ import javafx.scene.input.TransferMode
 //java kódként találtam, lefordítottam kotlinra de nem az én kódom.
 //remélem ez nem gond.
 
+//illetve felraktam egy issue-t a tornadofx githubjára,
+//hátha meg tudja nekem mondani hogy bővítsem ki a dsljét úgy hogy működjön
+//szóval még az is elképzelhető hogy ad erre egy szebb megoldást
+
 var draggingTab: Tab? = null
 
 class DraggableTabPane : TabPane() {
