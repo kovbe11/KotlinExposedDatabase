@@ -17,6 +17,7 @@ typealias SaleDirtyStateMapping = Map.Entry<SaleModel, TableColumnDirtyState<Sal
 
 
 //minden ami adatbázissal kommunikál az alkalmazásból az ide kerül
+
 class DatabaseController : Controller() {
 
 
