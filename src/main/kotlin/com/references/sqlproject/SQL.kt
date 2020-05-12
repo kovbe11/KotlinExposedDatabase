@@ -4,11 +4,11 @@ import org.jetbrains.exposed.dao.IntEntity
 import org.jetbrains.exposed.dao.IntEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.IntIdTable
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.sql.Connection
+import java.sql.ResultSet
 
 object DB {
     val db by lazy {
@@ -17,6 +17,7 @@ object DB {
         temp
     }
 }
+
 
 object Items : IntIdTable(){
     val ic = text("internet_code")
@@ -41,7 +42,7 @@ class Item(id: EntityID<Int>) : IntEntity(id) {
 
 object Shops : IntIdTable(){
     val name = text("name")
-    val address = text("address")
+    val address = text("address").nullable()
     val tax = text("tax").nullable()
     val contact = text("contact").nullable()
 }
@@ -55,15 +56,18 @@ class Shop(id: EntityID<Int>) : IntEntity(id) {
     var contact by Shops.contact
     val lastSaleDate: String
         get() {
-            val ret = transaction(DB.db) {
-                Sales.leftJoin(Shops).select {
-                    Shops.id eq this@Shop.id
-                }.adjustSlice {
-                    this.slice(Sales.date)
-                }.maxBy { it[Sales.date] }
+            val ret = transaction (DB.db) {
+                        (Sales leftJoin Shops).select {
+                            Sales.buyerId eq this@Shop.id
+                        }.adjustSlice {
+                            this.slice(Sales.date)
+                        }.maxBy { it[Sales.date] }
+                    }
+            return if(ret == null){
+                "-";
+            }else{
+                ret[Sales.date];
             }
-                ?: return "-"
-            return ret[Sales.date]
         }
 
     override fun toString(): String {
@@ -82,7 +86,18 @@ object Orders : IntIdTable(){
 class Order(id: EntityID<Int>) : IntEntity(id) {
     companion object : IntEntityClass<Order>(Orders)
 
-    var itemId by Orders.itemId
+    private var itemId by Orders.itemId
+    var itemIdInt: Int
+        get(){
+            return transaction(DB.db) {
+                itemId.value
+            }
+        }
+        set(value){
+            transaction(DB.db) {
+                itemId = Item[value].id
+            }
+        }
     var netPrice by Orders.netPrice
     var date by Orders.date
     var quantity by Orders.quantity
@@ -103,8 +118,30 @@ object Sales : IntIdTable(){
 class Sale(id: EntityID<Int>) : IntEntity(id) {
     companion object : IntEntityClass<Sale>(Sales)
 
-    var itemId by Sales.itemId
-    var buyerId by Sales.buyerId
+    private var itemId by Sales.itemId
+    var itemIdInt: Int
+        get(){
+            return transaction(DB.db) {
+                itemId.value
+            }
+        }
+        set(value){
+            transaction(DB.db) {
+                itemId = Item[value].id
+            }
+        }
+    private var buyerId by Sales.buyerId
+    var buyerIdInt: Int
+        get(){
+            return transaction(DB.db) {
+                buyerId.value
+            }
+        }
+        set(value){
+            transaction(DB.db) {
+                buyerId = Shop[value].id
+            }
+        }
     var date by Sales.date
     var sPrice by Sales.sellingPrice
     var quantity by Sales.quantity

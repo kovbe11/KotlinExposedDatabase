@@ -1,10 +1,10 @@
 package com.references.sqlproject
 
 import javafx.collections.ObservableList
-import org.jetbrains.exposed.dao.IntEntity
+import org.jetbrains.exposed.sql.StdOutSqlLogger
+import org.jetbrains.exposed.sql.addLogger
 import org.jetbrains.exposed.sql.transactions.transaction
 import tornadofx.Controller
-import tornadofx.ItemViewModel
 import tornadofx.TableColumnDirtyState
 import tornadofx.asObservable
 
@@ -14,6 +14,8 @@ typealias ShopDirtyStateMapping = Map.Entry<ShopModel, TableColumnDirtyState<Sho
 typealias OrderDirtyStateMapping = Map.Entry<OrderModel, TableColumnDirtyState<OrderModel>>
 typealias SaleDirtyStateMapping = Map.Entry<SaleModel, TableColumnDirtyState<SaleModel>>
 
+//TODO: miért nem tudom ezt duplikáció nélkül kihozni? ennek 3 függvénynek kéne lenni 12 helyett..
+//és emiatt a törlést is 4szeresen kéne megírni.
 
 
 //minden ami adatbázissal kommunikál az alkalmazásból az ide kerül
@@ -62,6 +64,20 @@ class DatabaseController : Controller() {
     }
 
     fun delete(model: ItemModel){
+
+        //SQLITE nem szereti az exposedot, alapból ki van kapcsolva az fk constraint
+        //és van egy issue a githubon ami ezt tárgyalja, és sajnos nincs rá megoldás
+        //szóval ellenőrzök inkább kézzel.
+
+        transaction(DB.db) {
+            if(!Order.find{Orders.itemId eq model.item.id}.empty()){
+                throw ForeignKeyViolation("There is an order referencing this item.")
+            }
+            if(!Sale.find{Sales.itemId eq model.item.id}.empty()){
+                throw ForeignKeyViolation("There is a sale referencing this item.")
+            }
+        }
+
         transaction(DB.db) {
             model.item.delete()
         }
@@ -84,14 +100,18 @@ class DatabaseController : Controller() {
 
     fun delete(model: ShopModel){
         transaction(DB.db) {
+            if(!Sale.find{Sales.buyerId eq model.item.id}.empty()){
+                throw ForeignKeyViolation("There is a sale referencing this shop.")
+            }
+        }
+
+        transaction(DB.db){
             model.item.delete()
         }
         shops.remove(model)
     }
 
-    //itt akárhogy próbálkoztam nem sikerült találnom egy olyan typealiast
-    //amivel csak egyszer kell implementálni.. Ha te ki tudod találni kérlek írj rám
-    //mert valószínű hogy valamit nem értek és azért nem sikerült.
+    //itt akárhogy próbálkoztam nem sikerült találnom egy olyan typealiast amivel csak egyszer kell implementálni..
 
     fun commitDirtyItems(dirtyMapping: Sequence<ItemDirtyStateMapping>){
         transaction(DB.db) {
@@ -126,5 +146,9 @@ class DatabaseController : Controller() {
             }
         }
     }
+
+}
+
+class ForeignKeyViolation(s: String) : Throwable(s) {
 
 }

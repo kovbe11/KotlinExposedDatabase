@@ -1,23 +1,37 @@
 package com.references.sqlproject
 
 import javafx.event.EventHandler
+import javafx.event.EventTarget
 import javafx.scene.control.Label
 import javafx.scene.control.Tab
 import javafx.scene.control.TabPane
 import javafx.scene.input.ClipboardContent
 import javafx.scene.input.TransferMode
+import tornadofx.attachTo
+import tornadofx.tag
 
 
+//a kód ezen része stackoverflowról származik, java kódként találtam valami hasonlót.
 
-//ez a kódrészlet stackoverflowról származik.
-//java kódként találtam, lefordítottam kotlinra de nem az én kódom.
-//remélem ez nem gond.
 
-//illetve felraktam egy issue-t a tornadofx githubjára,
-//hátha meg tudja nekem mondani hogy bővítsem ki a dsljét úgy hogy működjön
-//szóval még az is elképzelhető hogy ad erre egy szebb megoldást
+//dsl bővítés:
 
-var draggingTab: Tab? = null
+fun EventTarget.draggabletabpane(op: DraggableTabPane.() -> Unit = {}) =
+        DraggableTabPane().attachTo(this, op)
+
+fun DraggableTabPane.draggabletab(text: String? = null,
+                                  tag: Any? = null,
+                                  op: Tab.() -> Unit = {})
+        : DraggableTab {
+    val tab = DraggableTab(text)
+    tab.tag = tag
+    tabs.add(tab)
+    return tab.also(op)
+}
+
+//a kód ezen része stackoverflowról származik, java kódként találtam valami hasonlót.
+
+var draggingTab: DraggableTab? = null
 
 class DraggableTabPane : TabPane() {
     init {
@@ -53,10 +67,9 @@ class DraggableTabPane : TabPane() {
 }
 
 
-class DraggableTab : Tab() {
+class DraggableTab(tabName: String?) : Tab() {
     init {
-        val label = Label(text)
-        text = null
+        val label = Label(tabName)
         label.onDragDetected =
                 EventHandler { event ->
                     val dragboard = label.startDragAndDrop(TransferMode.MOVE)
