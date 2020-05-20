@@ -4,22 +4,28 @@ import org.jetbrains.exposed.dao.IntEntity
 import org.jetbrains.exposed.dao.IntEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.IntIdTable
-import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
+import java.io.File
 import java.sql.Connection
-import java.sql.ResultSet
 
 object DB {
+
+
     val db by lazy {
-        val temp = Database.connect("jdbc:sqlite:C:/BME/kotlin-gradle-starter/database.db", "org.sqlite.JDBC")
+        val databasePath: String = File("config.txt").bufferedReader().use {
+            it.readLine()
+        }
+        val temp = Database.connect("jdbc:sqlite:$databasePath", "org.sqlite.JDBC")
         TransactionManager.manager.defaultIsolationLevel = Connection.TRANSACTION_SERIALIZABLE
         temp
     }
 }
 
 
-object Items : IntIdTable(){
+object Items : IntIdTable() {
     val ic = text("internet_code")
     val name = text("name")
     val purchasePrice = double("purchase_price")
@@ -40,7 +46,7 @@ class Item(id: EntityID<Int>) : IntEntity(id) {
 }
 
 
-object Shops : IntIdTable(){
+object Shops : IntIdTable() {
     val name = text("name")
     val address = text("address").nullable()
     val tax = text("tax").nullable()
@@ -56,16 +62,16 @@ class Shop(id: EntityID<Int>) : IntEntity(id) {
     var contact by Shops.contact
     val lastSaleDate: String
         get() {
-            val ret = transaction (DB.db) {
-                        (Sales leftJoin Shops).select {
-                            Sales.buyerId eq this@Shop.id
-                        }.adjustSlice {
-                            this.slice(Sales.date)
-                        }.maxBy { it[Sales.date] }
-                    }
-            return if(ret == null){
+            val ret = transaction(DB.db) {
+                (Sales leftJoin Shops).select {
+                    Sales.buyerId eq this@Shop.id
+                }.adjustSlice {
+                    this.slice(Sales.date)
+                }.maxBy { it[Sales.date] }
+            }
+            return if (ret == null) {
                 "-";
-            }else{
+            } else {
                 ret[Sales.date];
             }
         }
@@ -76,7 +82,7 @@ class Shop(id: EntityID<Int>) : IntEntity(id) {
 }
 
 
-object Orders : IntIdTable(){
+object Orders : IntIdTable() {
     val itemId = reference("item_id", Items.id)
     val netPrice = double("net_price")
     val date = text("date").check { it.like("____-__-__") }
@@ -86,14 +92,14 @@ object Orders : IntIdTable(){
 class Order(id: EntityID<Int>) : IntEntity(id) {
     companion object : IntEntityClass<Order>(Orders)
 
-    private var itemId by Orders.itemId
+    var itemId by Orders.itemId
     var itemIdInt: Int
-        get(){
+        get() {
             return transaction(DB.db) {
                 itemId.value
             }
         }
-        set(value){
+        set(value) {
             transaction(DB.db) {
                 itemId = Item[value].id
             }
@@ -107,7 +113,7 @@ class Order(id: EntityID<Int>) : IntEntity(id) {
     }
 }
 
-object Sales : IntIdTable(){
+object Sales : IntIdTable() {
     val itemId = reference("item_id", Items.id)
     val buyerId = reference("buyer_id", Shops.id)
     val date = text("date").check { it.like("____-__-__") }
@@ -120,24 +126,24 @@ class Sale(id: EntityID<Int>) : IntEntity(id) {
 
     private var itemId by Sales.itemId
     var itemIdInt: Int
-        get(){
+        get() {
             return transaction(DB.db) {
                 itemId.value
             }
         }
-        set(value){
+        set(value) {
             transaction(DB.db) {
                 itemId = Item[value].id
             }
         }
     private var buyerId by Sales.buyerId
     var buyerIdInt: Int
-        get(){
+        get() {
             return transaction(DB.db) {
                 buyerId.value
             }
         }
-        set(value){
+        set(value) {
             transaction(DB.db) {
                 buyerId = Shop[value].id
             }

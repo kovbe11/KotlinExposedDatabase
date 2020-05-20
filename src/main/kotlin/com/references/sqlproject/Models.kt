@@ -58,13 +58,13 @@ class ShopModel : Model<Shop>() {
 
 class OrderModel : Model<Order>() {
     val id = bind(Order::id)
-    val itemId = bind(Order::itemIdInt)
+    val idOfItem = bind(Order::itemIdInt)
 
     //TODO: ez nem ide való hanem az SQLbe.
     val itemName: String
         get() {
             return transaction(DB.db) {
-                Item[itemId.value].name
+                Item[idOfItem.value].name
             }
         }
     val netPrice = bind(Order::netPrice)
@@ -72,7 +72,7 @@ class OrderModel : Model<Order>() {
     val quantity = bind(Order::quantity)
     override fun contains(subString: String): Boolean {
         return id.value.value.toString().contentEquals(subString) ||
-                itemId.value.toString().contentEquals(subString) ||
+                idOfItem.value.toString().contentEquals(subString) ||
                 itemName.contains(subString) ||
                 netPrice.value.toString().contentEquals(subString) ||
                 date.value.contains(subString) ||
