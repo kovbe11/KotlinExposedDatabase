@@ -41,7 +41,7 @@ class Item(id: EntityID<Int>) : IntEntity(id) {
     var available by Items.available
 
     override fun toString(): String {
-        return "$id, $ic, $name,$pPrice, $available"
+        return name
     }
 }
 
@@ -70,14 +70,14 @@ class Shop(id: EntityID<Int>) : IntEntity(id) {
                 }.maxBy { it[Sales.date] }
             }
             return if (ret == null) {
-                "-";
+                "-"
             } else {
-                ret[Sales.date];
+                ret[Sales.date]
             }
         }
 
     override fun toString(): String {
-        return "$id, $name, $address, $tax, $contact, $lastSaleDate"
+        return name
     }
 }
 
@@ -109,7 +109,7 @@ class Order(id: EntityID<Int>) : IntEntity(id) {
     var quantity by Orders.quantity
 
     override fun toString(): String {
-        return "$id, item: $itemId, $netPrice, $date, $quantity"
+        return "$id"
     }
 }
 
@@ -124,7 +124,7 @@ object Sales : IntIdTable() {
 class Sale(id: EntityID<Int>) : IntEntity(id) {
     companion object : IntEntityClass<Sale>(Sales)
 
-    private var itemId by Sales.itemId
+    var itemId by Sales.itemId
     var itemIdInt: Int
         get() {
             return transaction(DB.db) {
@@ -136,7 +136,7 @@ class Sale(id: EntityID<Int>) : IntEntity(id) {
                 itemId = Item[value].id
             }
         }
-    private var buyerId by Sales.buyerId
+    var buyerId by Sales.buyerId
     var buyerIdInt: Int
         get() {
             return transaction(DB.db) {
@@ -153,7 +153,7 @@ class Sale(id: EntityID<Int>) : IntEntity(id) {
     var quantity by Sales.quantity
 
     override fun toString(): String {
-        return "$id, item: $itemId, shop: $buyerId, $date, $sPrice, $quantity"
+        return "$id"
     }
 
 }

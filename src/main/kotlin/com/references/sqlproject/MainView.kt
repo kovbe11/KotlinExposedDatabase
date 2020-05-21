@@ -1,21 +1,30 @@
 package com.references.sqlproject
 
+import com.references.sqlproject.insert.NewItemForm
+import com.references.sqlproject.insert.NewOrderTable
+import com.references.sqlproject.insert.NewSaleTable
+import com.references.sqlproject.insert.NewShopForm
+import com.references.sqlproject.models.ItemModel
+import com.references.sqlproject.models.OrderModel
+import com.references.sqlproject.models.SaleModel
+import com.references.sqlproject.models.ShopModel
 import javafx.beans.property.SimpleObjectProperty
 import javafx.beans.property.StringProperty
 import javafx.event.EventHandler
-import javafx.scene.control.SelectionMode
 import javafx.scene.control.TabPane
 import javafx.scene.control.TableView
 import javafx.scene.input.KeyCode
 import javafx.scene.input.KeyEvent
 import javafx.scene.layout.Priority
+import javafx.stage.Modality
 import tornadofx.*
+import java.util.*
 
 
 fun deleteHandle(table: TableView<*>, controller: DatabaseController, event: KeyEvent) {
     if (event.code == KeyCode.DELETE) {
         val selected = table.selectionModel.selectedCells
-        var msg = selected.joinToString(limit = 3, truncated = "\nand ${selected.size - 3} more") {
+        val msg = selected.joinToString(limit = 3, truncated = "\nand ${selected.size - 3} more") {
             table.items[it.row].toString()
         }
 
@@ -28,15 +37,12 @@ fun deleteHandle(table: TableView<*>, controller: DatabaseController, event: Key
     }
 }
 
-
-//TODO: eventarget extension: saleview, orderview, itemview, shopview
-
 class MainView : View("Database") {
 
     private val controller: DatabaseController by inject()
 
-    var itemTable: TableViewEditModel<ItemModel> by singleAssign()
-    var shopTable: TableViewEditModel<ShopModel> by singleAssign()
+    private var itemTable: TableViewEditModel<ItemModel> by singleAssign()
+    private var shopTable: TableViewEditModel<ShopModel> by singleAssign()
     private var orderTable: TableViewEditModel<OrderModel> by singleAssign()
     private var saleTable: TableViewEditModel<SaleModel> by singleAssign()
 
@@ -48,10 +54,21 @@ class MainView : View("Database") {
     val orders = SortedFilteredList(controller.orders)
     val sales = SortedFilteredList(controller.sales)
 
+    private val errors: LinkedList<String> = LinkedList()
+
+    fun registerError(msg: String) {
+        errors.add(msg)
+    }
+
+    fun showErrors() {
+        val errorMsg: String = errors.joinToString(limit = 3, truncated = "\nand ${errors.size - 3} more")
+        errors.clear()
+        error("Something went wrong!", content = errorMsg)
+    }
 
     override val root = vbox {
         menubar {
-            menu("File") {
+            menu("Edit") {
                 menu("New..") {
                     item("Item") {
                         action {
@@ -74,8 +91,6 @@ class MainView : View("Database") {
                         }
                     }
                 }
-            }
-            menu("Edit") {
                 menu("Commit..") {
                     item("Items") {
                         action {
@@ -129,40 +144,7 @@ class MainView : View("Database") {
                     isFocusTraversable = false
                     tabClosingPolicy = TabPane.TabClosingPolicy.UNAVAILABLE
 
-                    tableview<ItemModel> {
-
-                        column("#", ItemModel::id).fixedWidth(40)
-                        column("ic", ItemModel::ic).makeEditable().weightedWidth(1.0)
-                        column("name", ItemModel::name).makeEditable().remainingWidth()
-                        column("purchase price", ItemModel::pPrice).makeEditable().weightedWidth(1.0)
-                        column("available", ItemModel::available).makeEditable().weightedWidth(1.0)
-
-                        val filterer = this@MainView.items.bindTo(this)
-
-
-                        filterer.filterWhen(filter) { filter, item ->
-                            item.contains(filter) || !filterTarget.value.isEnabled(FilterTargetType.Items)
-                        }
-
-                        filterer.filterWhen(filterTarget) { _, item ->
-                            item.contains(filter.get()) || !filterTarget.value.isEnabled(FilterTargetType.Items)
-                        }
-
-
-                        smartResize()
-
-                        itemTable = editModel
-                        enableDirtyTracking()
-                        selectionModel.selectionMode = SelectionMode.MULTIPLE
-                        selectOnDrag()
-
-                        onKeyPressed = EventHandler {
-                            deleteHandle(this, controller, it)
-                        }
-
-
-                    }
-                    /*itemview(this@MainView.items){
+                    itemview(this@MainView.items) {
                         val filterer = items as SortedFilteredList
                         filterer.filterWhen(filter) { filter, item ->
                             item.contains(filter) || !filterTarget.value.isEnabled(FilterTargetType.Items)
@@ -176,25 +158,17 @@ class MainView : View("Database") {
                         onKeyPressed = EventHandler {
                             deleteHandle(this, controller, it)
                         }
+                    }
 
-                   }*/
                 }
                 draggabletab("Shops") {
                     tabClosingPolicy = TabPane.TabClosingPolicy.UNAVAILABLE
                     isFocusTraversable = false
 
-                    tableview<ShopModel> {
+                    shopview(shops) {
+                        //TODO: ez a filteres cucc egy if(items is SortedFilteredList) el betehető egy TableView extensionként!
+                        val filterer = items as SortedFilteredList
 
-                        column("#", ShopModel::id).fixedWidth(40)
-                        column("name", ShopModel::name).makeEditable().remainingWidth()
-                        column("address", ShopModel::address).makeEditable().weightedWidth(0.5)
-                        column("tax", ShopModel::tax).makeEditable().weightedWidth(0.5)
-                        column("contact", ShopModel::contact).makeEditable().weightedWidth(0.5)
-                        column("last sale", ShopModel::lastSaleDate).fixedWidth(90)
-
-                        selectOnDrag()
-
-                        val filterer = shops.bindTo(this)
                         filterer.filterWhen(filter) { filter, item ->
                             item.contains(filter) || !filterTarget.value.isEnabled(FilterTargetType.Shops)
                         }
@@ -204,13 +178,10 @@ class MainView : View("Database") {
                         }
                         shopTable = editModel
 
-                        enableDirtyTracking()
-                        selectionModel.selectionMode = SelectionMode.MULTIPLE
                         onKeyPressed = EventHandler {
                             deleteHandle(this, controller, it)
                         }
 
-                        smartResize()
                     }
                 }
             }
@@ -221,18 +192,9 @@ class MainView : View("Database") {
                     tabClosingPolicy = TabPane.TabClosingPolicy.UNAVAILABLE
                     isFocusTraversable = false
 
-                    tableview<OrderModel> {
+                    orderview(orders) {
 
-                        column("#", OrderModel::id).fixedWidth(40)
-                        column("itemId", OrderModel::idOfItem).makeEditable().weightedWidth(0.3)
-                        readonlyColumn("itemName", OrderModel::itemName).weightedWidth(1)
-                        column("netPrice", OrderModel::netPrice).makeEditable().weightedWidth(0.5)
-                        column("date", OrderModel::date).makeEditable().fixedWidth(90)
-                        column("quantity", OrderModel::quantity).makeEditable().weightedWidth(0.5)
-                        selectOnDrag()
-
-
-                        val filterer = orders.bindTo(this)
+                        val filterer = items as SortedFilteredList
                         filterer.filterWhen(filter) { filter, item ->
                             item.contains(filter) || !filterTarget.value.isEnabled(FilterTargetType.Orders)
                         }
@@ -243,33 +205,18 @@ class MainView : View("Database") {
                         orderTable = editModel
 
 
-                        enableDirtyTracking()
-
-                        selectionModel.selectionMode = SelectionMode.MULTIPLE
                         onKeyPressed = EventHandler {
                             deleteHandle(this, controller, it)
                         }
-                        smartResize()
                     }
                 }
                 draggabletab("Sales") {
                     tabClosingPolicy = TabPane.TabClosingPolicy.UNAVAILABLE
                     isFocusTraversable = false
 
-                    tableview<SaleModel> {
+                    saleview(sales) {
 
-                        column("#", SaleModel::id).fixedWidth(40)
-                        column("itemId", SaleModel::itemId).makeEditable().weightedWidth(0.3)
-                        readonlyColumn("itemName", SaleModel::itemName).weightedWidth(1.0)
-                        column("buyerId", SaleModel::buyerId).makeEditable().weightedWidth(0.3)
-                        readonlyColumn("shop name", SaleModel::shopName).weightedWidth(1.0)
-                        column("date", SaleModel::date).makeEditable()
-                        column("selling price", SaleModel::sPrice).makeEditable().weightedWidth(0.5)
-                        column("quantity", SaleModel::quantity).makeEditable().weightedWidth(0.5)
-
-                        selectOnDrag()
-
-                        val filterer = sales.bindTo(this)
+                        val filterer = items as SortedFilteredList
                         filterer.filterWhen(filter) { filter, item ->
                             item.contains(filter) || !filterTarget.value.isEnabled(FilterTargetType.Sales)
                         }
@@ -279,47 +226,44 @@ class MainView : View("Database") {
                         }
                         saleTable = editModel
 
-                        enableDirtyTracking()
-
-                        selectionModel.selectionMode = SelectionMode.MULTIPLE
                         onKeyPressed = EventHandler {
                             deleteHandle(this, controller, it)
                         }
-                        smartResize()
                     }
                 }
             }
         }
     }
 
-    fun newItem() {
-        NewItemForm(controller).openModal()
+    private fun newItem() {
+        NewItemForm(controller).openModal(modality = Modality.NONE)
     }
 
-    fun newShop() {
-        NewShopForm(controller).openModal()
+    private fun newShop() {
+        NewShopForm(controller).openModal(modality = Modality.NONE)
     }
 
-    fun newOrder() {
+    private fun newOrder() {
+
         val newOrderTable =
                 if (orderTable.tableView.selectionModel.selectedItems.isEmpty()) NewOrderTable(controller)
                 else NewOrderTable(controller, orderTable.tableView.selectionModel.selectedItems)
 
-        newOrderTable.openModal()?.setOnCloseRequest {
+        newOrderTable.openModal(modality = Modality.NONE)?.setOnCloseRequest {
             newOrderTable.tryClosing()
             it.consume()
         }
     }
 
-    fun newSale() {
-        /*val newSaleTable =
-                if (saletable.tableView.selectionModel.selectedItems.isEmpty()) NewSaleTable(controller)
+    private fun newSale() {
+        val newSaleTable =
+                if (saleTable.tableView.selectionModel.selectedItems.isEmpty()) NewSaleTable(controller)
                 else NewSaleTable(controller, saleTable.tableView.selectionModel.selectedItems)
 
-        newSaleTable.openModal()?.setOnCloseRequest {
+        newSaleTable.openModal(modality = Modality.NONE)?.setOnCloseRequest {
             newSaleTable.tryClosing()
             it.consume()
-        }*/
+        }
     }
 
 }

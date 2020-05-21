@@ -1,12 +1,21 @@
 package com.references.sqlproject
 
 import com.references.sqlproject.DB.db
+import com.references.sqlproject.insert.TempItem
+import com.references.sqlproject.insert.TempOrder
+import com.references.sqlproject.insert.TempSale
+import com.references.sqlproject.insert.TempShop
+import com.references.sqlproject.models.ItemModel
+import com.references.sqlproject.models.OrderModel
+import com.references.sqlproject.models.SaleModel
+import com.references.sqlproject.models.ShopModel
 import javafx.collections.ObservableList
 import org.jetbrains.exposed.sql.transactions.transaction
 import tornadofx.Controller
 import tornadofx.ItemViewModel
 import tornadofx.TableColumnDirtyState
 import tornadofx.asObservable
+import java.sql.SQLException
 
 
 //minden ami adatbázissal kommunikál az alkalmazásból az ide kerül
@@ -112,14 +121,70 @@ class DatabaseController : Controller() {
         shops.remove(model)
     }
 
+    fun insertItem(itemInfo: TempItem): Item {
+        return transaction(db) {
+            Item.new(itemInfo.id) {
+                ic = itemInfo.ic!!
+                name = itemInfo.name!!
+                pPrice = itemInfo.pp!!
+                available = itemInfo.available!!
+            }
+        }
+    }
+
+    fun insertShop(shopInfo: TempShop): Shop {
+        return transaction(db) {
+            Shop.new(shopInfo.id) {
+                name = shopInfo.name!!
+                address = shopInfo.address
+                tax = shopInfo.tax
+                contact = shopInfo.contact
+            }
+        }
+    }
+
+    fun insertOrder(orderInfo: TempOrder): Order {
+        return transaction(db) {
+            Order.new(orderInfo.id) {
+                itemId = Item[orderInfo.itemId!!].id
+                netPrice = orderInfo.np!!
+                date = orderInfo.date!!
+                quantity = orderInfo.quantity!!
+            }
+        }
+    }
+
+    fun insertSale(saleInfo: TempSale): Sale {
+        return transaction(db) {
+            Sale.new(saleInfo.id) {
+                itemId = Item[saleInfo.itemId!!].id
+                buyerId = Shop[saleInfo.buyerId!!].id
+                sPrice = saleInfo.sp!!
+                date = saleInfo.date!!
+                quantity = saleInfo.quantity!!
+            }
+        }
+    }
+
     fun <M, V : ItemViewModel<M>> commitDirty(dirtyMapping: Map<V, TableColumnDirtyState<V>>) {
+        var flag = false
+
         transaction(db) {
             dirtyMapping.filter {
                 it.value.isDirty
             }.forEach {
-                it.key.commit()
-                it.value.commit()
+                try {
+                    println(it.key.commit())
+                    this.commit()
+                    it.value.commit()
+                } catch (ex: SQLException) {
+                    find(MainView::class).registerError("${it.key}")
+                    flag = true
+                }
             }
+        }
+        if (flag) {
+            find(MainView::class).showErrors()
         }
     }
 

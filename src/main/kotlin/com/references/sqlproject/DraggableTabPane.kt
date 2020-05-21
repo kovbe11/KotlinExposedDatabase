@@ -10,10 +10,6 @@ import javafx.scene.input.TransferMode
 import tornadofx.attachTo
 import tornadofx.tag
 
-
-//a kód ezen része stackoverflowról származik, java kódként találtam valami hasonlót.
-
-
 //dsl bővítés:
 
 fun EventTarget.draggabletabpane(op: DraggableTabPane.() -> Unit = {}) =

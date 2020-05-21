@@ -1,6 +1,5 @@
 package com.references.sqlproject
 
-import javafx.scene.text.FontWeight
 import tornadofx.Stylesheet
 import tornadofx.box
 import tornadofx.cssclass
@@ -16,7 +15,7 @@ class Styles : Stylesheet() {
     init {
 
         root{
-            padding = box(15.px)
+            padding = box(5.px)
         }
     }
 }
