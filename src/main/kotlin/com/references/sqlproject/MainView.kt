@@ -5,9 +5,31 @@ import javafx.beans.property.StringProperty
 import javafx.event.EventHandler
 import javafx.scene.control.SelectionMode
 import javafx.scene.control.TabPane
+import javafx.scene.control.TableView
 import javafx.scene.input.KeyCode
+import javafx.scene.input.KeyEvent
 import javafx.scene.layout.Priority
 import tornadofx.*
+
+
+fun deleteHandle(table: TableView<*>, controller: DatabaseController, event: KeyEvent) {
+    if (event.code == KeyCode.DELETE) {
+        val selected = table.selectionModel.selectedCells
+        var msg = selected.joinToString(limit = 3, truncated = "\nand ${selected.size - 3} more") {
+            table.items[it.row].toString()
+        }
+
+        confirm("Are you sure you want to delete this item?", "Selected item is: $msg", actionFn = {
+            table.selectionModel.selectedItems.toSet().forEach {
+                controller.delete(it)
+            }
+        })
+        event.consume()
+    }
+}
+
+
+//TODO: eventarget extension: saleview, orderview, itemview, shopview
 
 class MainView : View("Database") {
 
@@ -57,22 +79,22 @@ class MainView : View("Database") {
                 menu("Commit..") {
                     item("Items") {
                         action {
-                            controller.commitDirtyItems(itemTable.items.asSequence())
+                            controller.commitDirty(itemTable.items)
                         }
                     }
                     item("Shops") {
                         action {
-                            controller.commitDirtyShops(shopTable.items.asSequence())
+                            controller.commitDirty(shopTable.items)
                         }
                     }
                     item("Orders") {
                         action {
-                            controller.commitDirtyOrders(orderTable.items.asSequence())
+                            controller.commitDirty(orderTable.items)
                         }
                     }
                     item("Sales") {
                         action {
-                            controller.commitDirtySales(saleTable.items.asSequence())
+                            controller.commitDirty(saleTable.items)
                         }
                     }
                 }
@@ -134,24 +156,28 @@ class MainView : View("Database") {
                         selectionModel.selectionMode = SelectionMode.MULTIPLE
                         selectOnDrag()
 
-                        //TODO: miért nem tudom ezt duplikáció nélkül kihozni a többire is??
                         onKeyPressed = EventHandler {
-                            if (it.code == KeyCode.DELETE) {
-                                val selected = selectionModel.selectedCells
-                                var msg = selected.joinToString(limit = 3, truncated = "\nand ${selected.size - 3} more") {
-                                    items[it.row].name.value
-                                }
-
-                                confirm("Are you sure you want to delete this item?", "Selected item is: $msg", actionFn = {
-                                    selectionModel.selectedItems.forEach {
-                                        controller.delete(it)
-                                    }
-                                })
-                            }
+                            deleteHandle(this, controller, it)
                         }
 
 
                     }
+                    /*itemview(this@MainView.items){
+                        val filterer = items as SortedFilteredList
+                        filterer.filterWhen(filter) { filter, item ->
+                            item.contains(filter) || !filterTarget.value.isEnabled(FilterTargetType.Items)
+                        }
+
+                        filterer.filterWhen(filterTarget) { _, item ->
+                            item.contains(filter.get()) || !filterTarget.value.isEnabled(FilterTargetType.Items)
+                        }
+                        itemTable = editModel
+
+                        onKeyPressed = EventHandler {
+                            deleteHandle(this, controller, it)
+                        }
+
+                   }*/
                 }
                 draggabletab("Shops") {
                     tabClosingPolicy = TabPane.TabClosingPolicy.UNAVAILABLE
@@ -180,7 +206,9 @@ class MainView : View("Database") {
 
                         enableDirtyTracking()
                         selectionModel.selectionMode = SelectionMode.MULTIPLE
-
+                        onKeyPressed = EventHandler {
+                            deleteHandle(this, controller, it)
+                        }
 
                         smartResize()
                     }
@@ -218,7 +246,9 @@ class MainView : View("Database") {
                         enableDirtyTracking()
 
                         selectionModel.selectionMode = SelectionMode.MULTIPLE
-
+                        onKeyPressed = EventHandler {
+                            deleteHandle(this, controller, it)
+                        }
                         smartResize()
                     }
                 }
@@ -252,7 +282,9 @@ class MainView : View("Database") {
                         enableDirtyTracking()
 
                         selectionModel.selectionMode = SelectionMode.MULTIPLE
-
+                        onKeyPressed = EventHandler {
+                            deleteHandle(this, controller, it)
+                        }
                         smartResize()
                     }
                 }
@@ -269,7 +301,10 @@ class MainView : View("Database") {
     }
 
     fun newOrder() {
-        val newOrderTable = NewOrderTable(controller, orderTable.tableView.selectionModel.selectedItems)
+        val newOrderTable =
+                if (orderTable.tableView.selectionModel.selectedItems.isEmpty()) NewOrderTable(controller)
+                else NewOrderTable(controller, orderTable.tableView.selectionModel.selectedItems)
+
         newOrderTable.openModal()?.setOnCloseRequest {
             newOrderTable.tryClosing()
             it.consume()
@@ -277,18 +312,14 @@ class MainView : View("Database") {
     }
 
     fun newSale() {
-        dialog("new Sales") {
+        /*val newSaleTable =
+                if (saletable.tableView.selectionModel.selectedItems.isEmpty()) NewSaleTable(controller)
+                else NewSaleTable(controller, saleTable.tableView.selectionModel.selectedItems)
 
-            form {
-
-            }
-
-
-            button("Add") {
-                isDefaultButton = true
-            }
-        }
-
+        newSaleTable.openModal()?.setOnCloseRequest {
+            newSaleTable.tryClosing()
+            it.consume()
+        }*/
     }
 
 }

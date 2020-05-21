@@ -1,5 +1,6 @@
 package com.references.sqlproject
 
+import org.jetbrains.exposed.dao.IntEntity
 import org.jetbrains.exposed.sql.transactions.transaction
 import tornadofx.ItemViewModel
 
@@ -7,9 +8,8 @@ import tornadofx.ItemViewModel
 //tornadofx modellek
 
 //egy szégyenteljes próbálkozás a generikus osztályok összeszervezésére
-abstract class Model<T> : ItemViewModel<T>() {
+abstract class Model<T : IntEntity> : ItemViewModel<T>() {
     abstract fun contains(subString: String): Boolean
-
 }
 
 class ItemModel : Model<Item>() {
@@ -24,6 +24,10 @@ class ItemModel : Model<Item>() {
                 ic.value.contains(subString) ||
                 pPrice.value.toString().contentEquals(subString) ||
                 available.value.toString().contentEquals(subString)
+    }
+
+    override fun toString(): String {
+        return item.name
     }
 }
 
@@ -54,6 +58,10 @@ class ShopModel : Model<Shop>() {
                 } ||
                 lastSaleDate.value.contains(subString)
     }
+
+    override fun toString(): String {
+        return item.name
+    }
 }
 
 class OrderModel : Model<Order>() {
@@ -77,6 +85,10 @@ class OrderModel : Model<Order>() {
                 netPrice.value.toString().contentEquals(subString) ||
                 date.value.contains(subString) ||
                 quantity.value.toString().contentEquals(subString)
+    }
+
+    override fun toString(): String {
+        return item.id.value.toString()
     }
 }
 
@@ -111,5 +123,9 @@ class SaleModel : Model<Sale>() {
                 date.value.contains(subString) ||
                 sPrice.value.toString().contentEquals(subString) ||
                 quantity.value.toString().contentEquals(subString)
+    }
+
+    override fun toString(): String {
+        return item.id.value.toString()
     }
 }

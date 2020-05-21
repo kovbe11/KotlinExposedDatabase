@@ -18,7 +18,6 @@ class NewItemForm(val controller: DatabaseController) : Fragment("Add new Items"
         fieldset {
             field("id") {
 
-                //TODO: rájönni a bindolás szintaxisára
                 val textField = textfield {
                     textProperty().addListener(ChangeListener { _, _, newValue ->
                         model.id = newValue.toIntOrNull()
@@ -280,7 +279,7 @@ class NewOrderTable(val controller: DatabaseController, val orders: ObservableLi
             menu("edit") {
                 item("commit") {
                     action {
-                        controller.commitDirtyOrders(orderTable.items.asSequence())
+                        controller.commitDirty(orderTable.items)
                     }
                 }
                 item("rollback") {

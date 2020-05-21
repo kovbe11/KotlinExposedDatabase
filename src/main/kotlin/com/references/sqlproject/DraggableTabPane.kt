@@ -30,6 +30,8 @@ fun DraggableTabPane.draggabletab(text: String? = null,
 }
 
 //a kód ezen része stackoverflowról származik, java kódként találtam valami hasonlót.
+//bár jelentősen át kellett alakítani szóval végülis nem másolt kód de így fair ¯\_(ツ)_/¯
+//viszont ronda, mert az első működő verziónál békén is hagytam.
 
 var draggingTab: DraggableTab? = null
 
@@ -38,8 +40,9 @@ class DraggableTabPane : TabPane() {
         onDragDropped =
                 EventHandler { event ->
                     val dragboard = event.dragboard
-                    if (dragboard?.string == "tab") {
-                        if (draggingTab?.tabPane != this) {
+                    if (dragboard.string == "tab") {
+
+                        if (draggingTab!!.tabPane != this) {
                             draggingTab!!.tabPane!!.tabs!!.remove(draggingTab)
                             tabs.add(draggingTab)
                             selectionModel.select(draggingTab)
