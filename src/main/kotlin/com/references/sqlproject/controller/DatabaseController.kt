@@ -20,6 +20,10 @@ import java.sql.SQLException
 
 class DatabaseController : Controller() {
 
+    //itt lehet érdemes lenne egy loading részt betenni, és async betölteni a 2 2 független táblát,
+    // de így is csak 1-2 másodperc a betöltés 10ezres nagyságrendekkel
+
+
     //mivel baromi költséges lenne az adatbázistól elkérni a nevet minden rendezésnél stb, így megéri egy mappinget csinálni.
     //próbáltam observablevaluera kötni de az addListenerbe rakott kód nem hívódik meg, csak inicializáláskor
     //így nem egységbe zárt a dolog ugyan, de nem találtam meg a hibát a gondolatmenetemben hogy működjön az observable pattern

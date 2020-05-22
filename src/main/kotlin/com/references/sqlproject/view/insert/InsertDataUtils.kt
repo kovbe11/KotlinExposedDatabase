@@ -60,6 +60,7 @@ fun <M, V : ItemViewModel<M>> tryClosing(tableEditModel: TableViewEditModel<V>, 
     }
 }
 
+
 fun <M, V : ItemViewModel<M>> EventTarget.commitrollbackbar(controller: DatabaseController, tableEditModel: TableViewEditModel<V>) {
     menubar {
         menu("edit") {

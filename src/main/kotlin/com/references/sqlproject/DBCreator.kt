@@ -19,6 +19,7 @@ fun main() {
     val testDB = Database.connect("jdbc:sqlite:${file.path}", "org.sqlite.JDBC")
     TransactionManager.manager.defaultIsolationLevel = Connection.TRANSACTION_SERIALIZABLE
 
+    //10000res nagyságrendekre teszteltem, csak a kezdeti betöltési idő lesz hosszabb.
     val itemCount = 1000
     val shopCount = 100
     val orderCount = 5000

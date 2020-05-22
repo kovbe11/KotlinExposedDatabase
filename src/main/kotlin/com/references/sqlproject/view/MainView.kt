@@ -9,6 +9,7 @@ import com.references.sqlproject.view.insert.NewItemForm
 import com.references.sqlproject.view.insert.NewOrderTable
 import com.references.sqlproject.view.insert.NewSaleTable
 import com.references.sqlproject.view.insert.NewShopForm
+import javafx.application.Platform
 import javafx.event.EventHandler
 import javafx.geometry.Insets
 import javafx.scene.control.TabPane
@@ -277,6 +278,27 @@ class MainView : View("Database") {
         newSaleTable.openModal(modality = Modality.NONE)?.setOnCloseRequest {
             newSaleTable.tryClosing()
             it.consume()
+        }
+    }
+
+    fun tryClosing() {
+        if (itemTable.items.all {
+                    !it.value.isDirty
+                } && shopTable.items.all {
+                    !it.value.isDirty
+                } && orderTable.items.all {
+                    !it.value.isDirty
+                } && saleTable.items.all {
+                    !it.value.isDirty
+                }) {
+            Platform.exit()
+        } else {
+            confirm(owner = currentWindow, title = "Warning",
+                    content = "You have not commited changes!\nIf you click ok, these changes will be lost.",
+                    header = "Uncommitted changes!",
+                    actionFn = {
+                        Platform.exit()
+                    })
         }
     }
 

@@ -25,6 +25,8 @@ fun EventTarget.itemview(items: ObservableList<ItemModel>, op: TableView<ItemMod
         selectionModel.selectionMode = SelectionMode.MULTIPLE
         selectOnDrag()
 
+
+
         op()
     }
 
