@@ -1,14 +1,12 @@
-package com.references.sqlproject
+package com.references.sqlproject.controller
 
-import com.references.sqlproject.DB.db
-import com.references.sqlproject.insert.TempItem
-import com.references.sqlproject.insert.TempOrder
-import com.references.sqlproject.insert.TempSale
-import com.references.sqlproject.insert.TempShop
-import com.references.sqlproject.models.ItemModel
-import com.references.sqlproject.models.OrderModel
-import com.references.sqlproject.models.SaleModel
-import com.references.sqlproject.models.ShopModel
+import com.references.sqlproject.model.*
+import com.references.sqlproject.model.DB.db
+import com.references.sqlproject.view.MainView
+import com.references.sqlproject.view.insert.TempItem
+import com.references.sqlproject.view.insert.TempOrder
+import com.references.sqlproject.view.insert.TempSale
+import com.references.sqlproject.view.insert.TempShop
 import javafx.collections.ObservableList
 import org.jetbrains.exposed.sql.transactions.transaction
 import tornadofx.Controller
@@ -22,9 +20,16 @@ import java.sql.SQLException
 
 class DatabaseController : Controller() {
 
+    //mivel baromi költséges lenne az adatbázistól elkérni a nevet minden rendezésnél stb, így megéri egy mappinget csinálni.
+    //próbáltam observablevaluera kötni de az addListenerbe rakott kód nem hívódik meg, csak inicializáláskor
+    //így nem egységbe zárt a dolog ugyan, de nem találtam meg a hibát a gondolatmenetemben hogy működjön az observable pattern
+
+
+    val item: MutableMap<Int, String> = HashMap()
     val items: ObservableList<ItemModel> by lazy {
         transaction(db) {
             Item.all().map {
+                item[it.id.value] = it.name
                 ItemModel().apply {
                     item = it
                 }
@@ -32,9 +37,11 @@ class DatabaseController : Controller() {
         }
     }
 
+    val shop: MutableMap<Int, String> = HashMap()
     val shops: ObservableList<ShopModel> by lazy {
         transaction(db) {
             Shop.all().map {
+                shop[it.id.value] = it.name
                 ShopModel().apply {
                     item = it
                 }
@@ -122,7 +129,7 @@ class DatabaseController : Controller() {
     }
 
     fun insertItem(itemInfo: TempItem): Item {
-        return transaction(db) {
+        val ret = transaction(db) {
             Item.new(itemInfo.id) {
                 ic = itemInfo.ic!!
                 name = itemInfo.name!!
@@ -130,10 +137,12 @@ class DatabaseController : Controller() {
                 available = itemInfo.available!!
             }
         }
+        item[ret.id.value] = ret.name
+        return ret
     }
 
     fun insertShop(shopInfo: TempShop): Shop {
-        return transaction(db) {
+        val ret = transaction(db) {
             Shop.new(shopInfo.id) {
                 name = shopInfo.name!!
                 address = shopInfo.address
@@ -141,6 +150,8 @@ class DatabaseController : Controller() {
                 contact = shopInfo.contact
             }
         }
+        shop[ret.id.value] = ret.name
+        return ret
     }
 
     fun insertOrder(orderInfo: TempOrder): Order {
@@ -174,7 +185,6 @@ class DatabaseController : Controller() {
                 it.value.isDirty
             }.forEach {
                 try {
-                    println(it.key.commit())
                     this.commit()
                     it.value.commit()
                 } catch (ex: SQLException) {

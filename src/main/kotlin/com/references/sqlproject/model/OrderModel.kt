@@ -1,24 +1,26 @@
-package com.references.sqlproject.models
+package com.references.sqlproject.model
 
-import com.references.sqlproject.DB
-import com.references.sqlproject.Item
-import com.references.sqlproject.Order
-import org.jetbrains.exposed.sql.transactions.transaction
+import com.references.sqlproject.controller.DatabaseController
 
 class OrderModel : Model<Order>() {
+
     val id = bind(Order::id)
     val idOfItem = bind(Order::itemIdInt)
 
-    //TODO: ez nem ide való hanem az SQLbe.
+    val controller: DatabaseController by lazy {
+        find(DatabaseController::class)
+    }
+
     val itemName: String
         get() {
-            return transaction(DB.db) {
-                Item[idOfItem.value].name
-            }
+            return controller.item[idOfItem.value] as String
         }
+
     val netPrice = bind(Order::netPrice)
     val date = bind(Order::date)
     val quantity = bind(Order::quantity)
+
+
     override fun contains(subString: String): Boolean {
         return id.value.value.toString().contentEquals(subString) ||
                 idOfItem.value.toString().contentEquals(subString) ||

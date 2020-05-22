@@ -1,9 +1,9 @@
-package com.references.sqlproject.insert
+package com.references.sqlproject.view.insert
 
-import com.references.sqlproject.DB
-import com.references.sqlproject.DatabaseController
-import com.references.sqlproject.Item
-import com.references.sqlproject.models.ItemModel
+import com.references.sqlproject.controller.DatabaseController
+import com.references.sqlproject.model.DB
+import com.references.sqlproject.model.Item
+import com.references.sqlproject.model.ItemModel
 import org.jetbrains.exposed.sql.transactions.transaction
 import tornadofx.*
 import java.util.*

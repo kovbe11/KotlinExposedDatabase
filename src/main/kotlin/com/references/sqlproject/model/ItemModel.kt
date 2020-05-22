@@ -1,6 +1,4 @@
-package com.references.sqlproject.models
-
-import com.references.sqlproject.Item
+package com.references.sqlproject.model
 
 class ItemModel : Model<Item>() {
     val id = bind(Item::id)

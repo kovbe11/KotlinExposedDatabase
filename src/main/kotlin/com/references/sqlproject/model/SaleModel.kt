@@ -1,27 +1,26 @@
-package com.references.sqlproject.models
+package com.references.sqlproject.model
 
-import com.references.sqlproject.DB
-import com.references.sqlproject.Item
-import com.references.sqlproject.Sale
-import com.references.sqlproject.Shop
-import org.jetbrains.exposed.sql.transactions.transaction
+import com.references.sqlproject.controller.DatabaseController
 
 class SaleModel : Model<Sale>() {
     val id = bind(Sale::id)
     val itemId = bind(Sale::itemIdInt)
+
+    val controller: DatabaseController by lazy {
+        find(DatabaseController::class)
+    }
+
     val itemName: String
         get() {
-            return transaction(DB.db) {
-                Item[itemId.value].name
-            }
+            return controller.item[itemId.value] as String
         }
+
     val buyerId = bind(Sale::buyerIdInt)
+
+
     val shopName: String
         get() {
-
-            return transaction(DB.db) {
-                Shop[buyerId.value].name
-            }
+            return controller.shop[buyerId.value] as String
         }
     val date = bind(Sale::date)
     val sPrice = bind(Sale::sPrice)

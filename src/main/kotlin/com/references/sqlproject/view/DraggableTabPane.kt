@@ -1,4 +1,4 @@
-package com.references.sqlproject
+package com.references.sqlproject.view
 
 import javafx.event.EventHandler
 import javafx.event.EventTarget

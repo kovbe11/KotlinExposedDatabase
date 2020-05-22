@@ -1,1 +1,1 @@
-C:/BME/kotlin-gradle-starter/database.db
+testdb.db

@@ -1,11 +1,11 @@
-package com.references.sqlproject.insert
+package com.references.sqlproject.view.insert
 
-import com.references.sqlproject.DB.db
-import com.references.sqlproject.DatabaseController
-import com.references.sqlproject.Item
-import com.references.sqlproject.Shop
-import com.references.sqlproject.models.SaleModel
-import com.references.sqlproject.saleview
+import com.references.sqlproject.controller.DatabaseController
+import com.references.sqlproject.model.DB.db
+import com.references.sqlproject.model.Item
+import com.references.sqlproject.model.SaleModel
+import com.references.sqlproject.model.Shop
+import com.references.sqlproject.view.saleview
 import javafx.collections.FXCollections
 import javafx.collections.ObservableList
 import javafx.event.EventHandler

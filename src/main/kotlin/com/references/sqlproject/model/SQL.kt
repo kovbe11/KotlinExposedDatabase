@@ -1,4 +1,4 @@
-package com.references.sqlproject
+package com.references.sqlproject.model
 
 import org.jetbrains.exposed.dao.IntEntity
 import org.jetbrains.exposed.dao.IntEntityClass
@@ -12,8 +12,6 @@ import java.io.File
 import java.sql.Connection
 
 object DB {
-
-
     val db by lazy {
         val databasePath: String = File("config.txt").bufferedReader().use {
             it.readLine()
@@ -86,7 +84,7 @@ object Orders : IntIdTable() {
     val itemId = reference("item_id", Items.id)
     val netPrice = double("net_price")
     val date = text("date").check { it.like("____-__-__") }
-    val quantity = integer("quantity").check { it.greater(0) }
+    val quantity = integer("quantity")
 }
 
 class Order(id: EntityID<Int>) : IntEntity(id) {
@@ -95,15 +93,14 @@ class Order(id: EntityID<Int>) : IntEntity(id) {
     var itemId by Orders.itemId
     var itemIdInt: Int
         get() {
-            return transaction(DB.db) {
-                itemId.value
-            }
+            return itemId.value
         }
         set(value) {
-            transaction(DB.db) {
+            transaction(db) {
                 itemId = Item[value].id
             }
         }
+
     var netPrice by Orders.netPrice
     var date by Orders.date
     var quantity by Orders.quantity
@@ -117,8 +114,8 @@ object Sales : IntIdTable() {
     val itemId = reference("item_id", Items.id)
     val buyerId = reference("buyer_id", Shops.id)
     val date = text("date").check { it.like("____-__-__") }
-    val sellingPrice = double("selling_price").check { it.greater(0.0) }
-    val quantity = integer("quantity").check { it.greater(0) }
+    val sellingPrice = double("selling_price").check { it.greaterEq(0.0) }
+    val quantity = integer("quantity")
 }
 
 class Sale(id: EntityID<Int>) : IntEntity(id) {
@@ -127,27 +124,26 @@ class Sale(id: EntityID<Int>) : IntEntity(id) {
     var itemId by Sales.itemId
     var itemIdInt: Int
         get() {
-            return transaction(DB.db) {
-                itemId.value
-            }
+            return itemId.value
         }
         set(value) {
-            transaction(DB.db) {
+            transaction(db) {
                 itemId = Item[value].id
             }
         }
+
     var buyerId by Sales.buyerId
     var buyerIdInt: Int
         get() {
-            return transaction(DB.db) {
-                buyerId.value
-            }
+            return buyerId.value
         }
         set(value) {
-            transaction(DB.db) {
+            transaction(db) {
                 buyerId = Shop[value].id
             }
         }
+
+
     var date by Sales.date
     var sPrice by Sales.sellingPrice
     var quantity by Sales.quantity

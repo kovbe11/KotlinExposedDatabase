@@ -1,6 +1,6 @@
-package com.references.sqlproject.insert
+package com.references.sqlproject.view.insert
 
-import com.references.sqlproject.DatabaseController
+import com.references.sqlproject.controller.DatabaseController
 import javafx.collections.ObservableList
 import javafx.event.EventTarget
 import javafx.scene.text.Text

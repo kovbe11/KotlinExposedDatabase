@@ -1,5 +1,7 @@
 package com.references.sqlproject
 
+import com.references.sqlproject.view.MainView
+import com.references.sqlproject.view.Styles
 import javafx.application.Application
 import javafx.stage.Stage
 import tornadofx.App

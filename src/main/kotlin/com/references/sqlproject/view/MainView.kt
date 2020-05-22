@@ -1,16 +1,16 @@
-package com.references.sqlproject
+package com.references.sqlproject.view
 
-import com.references.sqlproject.insert.NewItemForm
-import com.references.sqlproject.insert.NewOrderTable
-import com.references.sqlproject.insert.NewSaleTable
-import com.references.sqlproject.insert.NewShopForm
-import com.references.sqlproject.models.ItemModel
-import com.references.sqlproject.models.OrderModel
-import com.references.sqlproject.models.SaleModel
-import com.references.sqlproject.models.ShopModel
-import javafx.beans.property.SimpleObjectProperty
-import javafx.beans.property.StringProperty
+import com.references.sqlproject.controller.DatabaseController
+import com.references.sqlproject.model.ItemModel
+import com.references.sqlproject.model.OrderModel
+import com.references.sqlproject.model.SaleModel
+import com.references.sqlproject.model.ShopModel
+import com.references.sqlproject.view.insert.NewItemForm
+import com.references.sqlproject.view.insert.NewOrderTable
+import com.references.sqlproject.view.insert.NewSaleTable
+import com.references.sqlproject.view.insert.NewShopForm
 import javafx.event.EventHandler
+import javafx.geometry.Insets
 import javafx.scene.control.TabPane
 import javafx.scene.control.TableView
 import javafx.scene.input.KeyCode
@@ -37,6 +37,7 @@ fun deleteHandle(table: TableView<*>, controller: DatabaseController, event: Key
     }
 }
 
+
 class MainView : View("Database") {
 
     private val controller: DatabaseController by inject()
@@ -45,9 +46,6 @@ class MainView : View("Database") {
     private var shopTable: TableViewEditModel<ShopModel> by singleAssign()
     private var orderTable: TableViewEditModel<OrderModel> by singleAssign()
     private var saleTable: TableViewEditModel<SaleModel> by singleAssign()
-
-    var filter: StringProperty by singleAssign()
-    val filterTarget: SimpleObjectProperty<FilterTargetType> = SimpleObjectProperty(FilterTargetType.All)
 
     val items = SortedFilteredList(controller.items)
     val shops = SortedFilteredList(controller.shops)
@@ -124,14 +122,67 @@ class MainView : View("Database") {
             }
         }
         hbox {
-            textfield {
+
+            val itemFilter = textfield {
                 hgrow = Priority.ALWAYS
                 isFocusTraversable = false
-                filter = textProperty()
             }
-            combobox(filterTarget, FilterTargetType.values().asList().asObservable()) {
+
+            button("filter items") {
+                action {
+                    items.predicate = {
+                        it.contains(itemFilter.text)
+                    }
+                    items.refilter()
+                }
+            }
+
+            val shopFilter = textfield {
+                hgrow = Priority.ALWAYS
                 isFocusTraversable = false
             }
+
+            button("filter shops") {
+                action {
+                    shops.predicate = {
+                        it.contains(shopFilter.text)
+                    }
+                    shops.refilter()
+                }
+            }
+
+            val orderFilter = textfield {
+                hgrow = Priority.ALWAYS
+                isFocusTraversable = false
+            }
+
+            button("filter orders") {
+                action {
+                    orders.predicate = {
+                        it.contains(orderFilter.text)
+                    }
+                    orders.refilter()
+                }
+            }
+
+
+            val saleFilter = textfield {
+                hgrow = Priority.ALWAYS
+                isFocusTraversable = false
+            }
+
+            button("filter sales") {
+                action {
+                    sales.predicate = {
+                        it.contains(saleFilter.text)
+                    }
+                    sales.refilter()
+                }
+            }
+
+            spacing = 30.0
+            padding = Insets(1.0, 15.0, 1.0, 15.0)
+
         }
 
         splitpane {
@@ -145,14 +196,6 @@ class MainView : View("Database") {
                     tabClosingPolicy = TabPane.TabClosingPolicy.UNAVAILABLE
 
                     itemview(this@MainView.items) {
-                        val filterer = items as SortedFilteredList
-                        filterer.filterWhen(filter) { filter, item ->
-                            item.contains(filter) || !filterTarget.value.isEnabled(FilterTargetType.Items)
-                        }
-
-                        filterer.filterWhen(filterTarget) { _, item ->
-                            item.contains(filter.get()) || !filterTarget.value.isEnabled(FilterTargetType.Items)
-                        }
                         itemTable = editModel
 
                         onKeyPressed = EventHandler {
@@ -166,16 +209,6 @@ class MainView : View("Database") {
                     isFocusTraversable = false
 
                     shopview(shops) {
-                        //TODO: ez a filteres cucc egy if(items is SortedFilteredList) el betehető egy TableView extensionként!
-                        val filterer = items as SortedFilteredList
-
-                        filterer.filterWhen(filter) { filter, item ->
-                            item.contains(filter) || !filterTarget.value.isEnabled(FilterTargetType.Shops)
-                        }
-
-                        filterer.filterWhen(filterTarget) { _, item ->
-                            item.contains(filter.get()) || !filterTarget.value.isEnabled(FilterTargetType.Shops)
-                        }
                         shopTable = editModel
 
                         onKeyPressed = EventHandler {
@@ -193,17 +226,7 @@ class MainView : View("Database") {
                     isFocusTraversable = false
 
                     orderview(orders) {
-
-                        val filterer = items as SortedFilteredList
-                        filterer.filterWhen(filter) { filter, item ->
-                            item.contains(filter) || !filterTarget.value.isEnabled(FilterTargetType.Orders)
-                        }
-
-                        filterer.filterWhen(filterTarget) { _, item ->
-                            item.contains(filter.get()) || !filterTarget.value.isEnabled(FilterTargetType.Orders)
-                        }
                         orderTable = editModel
-
 
                         onKeyPressed = EventHandler {
                             deleteHandle(this, controller, it)
@@ -215,15 +238,6 @@ class MainView : View("Database") {
                     isFocusTraversable = false
 
                     saleview(sales) {
-
-                        val filterer = items as SortedFilteredList
-                        filterer.filterWhen(filter) { filter, item ->
-                            item.contains(filter) || !filterTarget.value.isEnabled(FilterTargetType.Sales)
-                        }
-
-                        filterer.filterWhen(filterTarget) { _, item ->
-                            item.contains(filter.get()) || !filterTarget.value.isEnabled(FilterTargetType.Sales)
-                        }
                         saleTable = editModel
 
                         onKeyPressed = EventHandler {
