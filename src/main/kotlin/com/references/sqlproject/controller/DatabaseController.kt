@@ -21,7 +21,7 @@ import java.sql.SQLException
 class DatabaseController : Controller() {
 
     //itt lehet érdemes lenne egy loading részt betenni, és async betölteni a 2 2 független táblát,
-    // de így is csak 1-2 másodperc a betöltés 10ezres nagyságrendekkel
+    //de így is csak 1-2 másodperc a betöltés 10ezres nagyságrendekkel
 
 
     //mivel baromi költséges lenne az adatbázistól elkérni a nevet minden rendezésnél stb, így megéri egy mappinget csinálni.
