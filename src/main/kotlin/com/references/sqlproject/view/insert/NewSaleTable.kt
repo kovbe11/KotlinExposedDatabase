@@ -1,17 +1,13 @@
 package com.references.sqlproject.view.insert
 
 import com.references.sqlproject.controller.DatabaseController
-import com.references.sqlproject.model.DB.db
-import com.references.sqlproject.model.Item
 import com.references.sqlproject.model.SaleModel
-import com.references.sqlproject.model.Shop
-import com.references.sqlproject.view.saleview
+import com.references.sqlproject.view.*
 import javafx.collections.FXCollections
 import javafx.collections.ObservableList
 import javafx.event.EventHandler
 import javafx.scene.control.TableColumn
 import javafx.scene.text.Text
-import org.jetbrains.exposed.sql.transactions.transaction
 import tornadofx.*
 import java.util.*
 
@@ -20,7 +16,7 @@ class NewSaleTable(val controller: DatabaseController, val sales: ObservableList
     var netSumText: Text by singleAssign()
     var grossSumText: Text by singleAssign()
 
-    val validators = LinkedList<ValidationContext.Validator<String>>()
+    private val validators = LinkedList<ValidationContext.Validator<String>>()
 
     fun sumSales() {
         sumElements(netSumText, grossSumText, sales) {
@@ -40,106 +36,32 @@ class NewSaleTable(val controller: DatabaseController, val sales: ObservableList
         left {
             form {
                 fieldset {
-//itt biztos lehetne valamit varázsolni a propertykkel hogy ne legyen ugyanaz mint a newordertable feleslegesen de meghaladta a képességeim
-                    field("itemId") {
-                        val textField = textfield {
-                            textProperty().addListener(ChangeListener { _, _, newValue ->
-                                model.itemId = newValue.toIntOrNull()
-                            })
-                        }
 
-                        val validator = ValidationContext().addValidator(textField, textField.textProperty()) {
-                            when {
-                                it.isNullOrBlank() -> error("the item id is required")
-                                model.itemId == null -> error("not a number")
-                                model.itemId?.let { it1 -> transaction(db) { Item.findById(it1) } } == null -> error("there is no item with this id")
-                                else -> null
-                            }
+                    val validator1 = idField("ItemID", model::itemId,
+                            isRequired = true,
+                            mustFind = true,
+                            notFoundMsg = "There is no item with this id",
+                            finder = controller::findItemById)
+                    validator1.validate()
+                    validators.add(validator1)
 
-                        }
-                        validator.validate()
-                        validators.add(validator)
-                    }
+                    val validator2 = idField("BuyerID", model::buyerId,
+                            isRequired = true,
+                            mustFind = true,
+                            notFoundMsg = "There is no shop with this id",
+                            finder = controller::findShopById)
+                    validator2.validate()
+                    validators.add(validator2)
 
-                    field("buyer id") {
-                        val textField = textfield {
-                            textProperty().addListener(ChangeListener { _, _, newValue ->
-                                model.buyerId = newValue.toIntOrNull()
-                            })
-                        }
+                    val validator3 = priceField("Selling price", model::sp)
+                    validators.add(validator3)
 
-                        val validator = ValidationContext().addValidator(textField, textField.textProperty()) {
-                            when {
-                                it.isNullOrBlank() -> error("the item id is required")
-                                model.buyerId == null -> error("not a number")
-                                model.buyerId?.let { it1 -> transaction(db) { Shop.findById(it1) } } == null -> error("there is no shop with this id")
-                                else -> null
-                            }
+                    val validator4 = dateField(model::date)
+                    validators.add(validator4)
 
-                        }
-                        validator.validate()
-                        validators.add(validator)
-                    }
+                    val validator5 = quantityField("Quantity", model::quantity)
+                    validators.add(validator5)
 
-                    field("selling price") {
-                        val textField = textfield {
-                            textProperty().addListener(ChangeListener { _, _, newValue ->
-                                model.sp = newValue.toDoubleOrNull()
-                            })
-                        }
-
-                        val validator = ValidationContext().addValidator(textField, textField.textProperty()) {
-                            when {
-                                it.isNullOrBlank() -> error("net price is required")
-                                model.sp == null -> error("Not a number")
-                                else -> null
-                            }
-
-                        }
-                        validator.validate()
-                        validators.add(validator)
-                    }
-
-                    field("date") {
-                        val textField = textfield {
-                            textProperty().addListener(ChangeListener { _, _, newValue ->
-                                model.date = newValue
-                            })
-                        }
-
-                        val dateformat = Regex("^((19|2[0-9])[0-9]{2})-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])\$")
-
-                        val validator = ValidationContext().addValidator(textField, textField.textProperty()) {
-                            when {
-                                it.isNullOrBlank() -> error("date is required")
-                                !it.matches(dateformat) -> error("invalid dateformat")
-                                else -> null
-                            }
-                        }
-                        validator.validate()
-                        validators.add(validator)
-                    }
-
-                    field("quantity") {
-                        val textField = textfield {
-                            textProperty().addListener(ChangeListener { _, _, newValue ->
-                                model.quantity = newValue.toIntOrNull()
-                            })
-                        }
-
-                        val validator = ValidationContext().addValidator(textField, textField.textProperty()) {
-                            val quantity = textField.text.toIntOrNull()
-
-                            when {
-                                quantity == null -> error("quantity is required")
-                                quantity < 0 -> error("quantity must be > 0")
-                                else -> null
-                            }
-
-                        }
-                        validator.validate()
-                        validators.add(validator)
-                    }
                 }
 
                 button("Add") {

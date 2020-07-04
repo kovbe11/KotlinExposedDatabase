@@ -12,12 +12,14 @@ class TempItem(var id: Int? = null,
                var name: String? = null,
                var pp: Double? = null,
                var available: Int? = null)
+    : ItemViewModel<TempItem>()
 
 class TempShop(var id: Int? = null,
                var name: String? = null,
                var address: String? = null,
                var tax: String? = null,
                var contact: String? = null)
+    : ItemViewModel<TempShop>()
 
 class TempSale(var id: Int? = null,
                var itemId: Int? = null,
@@ -25,12 +27,14 @@ class TempSale(var id: Int? = null,
                var date: String? = null,
                var sp: Double? = null,
                var quantity: Int? = null)
+    : ItemViewModel<TempSale>()
 
 class TempOrder(var id: Int? = null,
                 var itemId: Int? = null,
                 var np: Double? = null,
                 var date: String? = null,
                 var quantity: Int? = null)
+    : ItemViewModel<TempOrder>()
 
 fun <M, V : ItemViewModel<M>> sumElements(netSumText: Text,
                                           grossSumText: Text,
@@ -55,6 +59,7 @@ fun <M, V : ItemViewModel<M>> tryClosing(tableEditModel: TableViewEditModel<V>, 
                 header = "Uncommitted changes!",
                 actionFn = {
                     tableEditModel.rollback()
+                    tableEditModel.tableView.items.invalidate()
                     frag.close()
                 })
     }

@@ -73,6 +73,18 @@ class DatabaseController : Controller() {
         }
     }
 
+    fun findItemById(id: Int?): Item? = id?.let {
+        transaction(db) {
+            Item.findById(it)
+        }
+    }
+
+    fun findShopById(id: Int?): Shop? = id?.let {
+        transaction(db) {
+            Shop.findById(it)
+        }
+    }
+
     fun delete(model: Any) {
         when (model) {
             is ItemModel -> delete(model)

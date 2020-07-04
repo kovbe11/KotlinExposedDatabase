@@ -1,113 +1,35 @@
 package com.references.sqlproject.view.insert
 
 import com.references.sqlproject.controller.DatabaseController
-import com.references.sqlproject.model.DB
-import com.references.sqlproject.model.Item
 import com.references.sqlproject.model.ItemModel
-import org.jetbrains.exposed.sql.transactions.transaction
+import com.references.sqlproject.view.idField
+import com.references.sqlproject.view.priceField
+import com.references.sqlproject.view.quantityField
+import com.references.sqlproject.view.stringField
 import tornadofx.*
 import java.util.*
 
 class NewItemForm(val controller: DatabaseController) : Fragment("Add new Items") {
 
     val model = TempItem()
-    val validators = LinkedList<ValidationContext.Validator<String>>()
+    private val validators = LinkedList<ValidationContext.Validator<String>>()
 
     override val root = form {
         fieldset {
-            field("id") {
+            val validator1 = idField("id", model::id, finder = controller::findItemById)
+            validators.add(validator1)
 
-                val textField = textfield {
-                    textProperty().addListener(ChangeListener { _, _, newValue ->
-                        model.id = newValue.toIntOrNull()
-                    })
-                }
+            val validator2 = stringField("internet code", model::ic)
+            validators.add(validator2)
 
-                val validator = ValidationContext().addValidator(textField, textField.textProperty()) {
-                    val item: Item? = transaction(DB.db) {
-                        textField.text.toIntOrNull()?.let { Item.findById(it) }
-                    }
-                    when {
-                        item != null -> {
-                            error("There is already an item with this id")
-                        }
-                        else -> null
-                    }
+            val validator3 = stringField("name", model::name)
+            validators.add(validator3)
 
-                }
+            val validator4 = priceField("purchase price", model::pp)
+            validators.add(validator4)
 
-                validators.add(validator)
-            }
-
-            field("internet code") {
-                val textField = textfield {
-                    textProperty().addListener(ChangeListener { _, _, newValue ->
-                        model.ic = newValue
-                    })
-                }
-
-                val validator = ValidationContext().addValidator(textField, textField.textProperty()) {
-                    if (it.isNullOrBlank()) error("The internet code field is required") else null
-                }
-                validator.validate()
-                validators.add(validator)
-            }
-
-            field("name") {
-                val textField = textfield {
-                    textProperty().addListener(ChangeListener { _, _, newValue ->
-                        model.name = newValue
-                    })
-                }
-
-                val validator = ValidationContext().addValidator(textField, textField.textProperty()) {
-                    if (it.isNullOrBlank()) error("The internet code field is required") else null
-                }
-                validator.validate()
-                validators.add(validator)
-            }
-
-            field("purchase price") {
-                val textField = textfield {
-                    textProperty().addListener(ChangeListener { _, _, newValue ->
-                        model.pp = newValue.toDoubleOrNull()
-                    })
-                }
-
-                val validator = ValidationContext().addValidator(textField, textField.textProperty()) {
-                    val pp = textField.text.toDoubleOrNull()
-
-                    when {
-                        pp == null -> error("purchase price is required")
-                        pp < 0 -> error("purchase price must be > 0")
-                        else -> null
-                    }
-
-                }
-                validator.validate()
-                validators.add(validator)
-            }
-
-            field("available") {
-                val textField = textfield {
-                    textProperty().addListener(ChangeListener { _, _, newValue ->
-                        model.available = newValue.toIntOrNull()
-                    })
-                }
-
-                val validator = ValidationContext().addValidator(textField, textField.textProperty()) {
-                    val available = textField.text.toIntOrNull()
-
-                    when {
-                        available == null -> error("available is required")
-                        available < 0 -> error("available must be > 0")
-                        else -> null
-                    }
-
-                }
-                validator.validate()
-                validators.add(validator)
-            }
+            val validator5 = quantityField("available", model::available)
+            validators.add(validator5)
         }
 
         button("Add") {
@@ -123,6 +45,7 @@ class NewItemForm(val controller: DatabaseController) : Fragment("Add new Items"
                 }
 
                 controller.items.add(itemModel)
+                validators.forEach { it.validate() }
             }
         }
     }
