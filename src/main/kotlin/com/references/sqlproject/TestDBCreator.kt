@@ -57,7 +57,7 @@ fun main() {
             Order.new {
                 itemId = Item.findById(Random.nextInt(itemCount - 1) + 1)!!.id
                 netPrice = Item.findById(itemId)!!.pPrice
-                val rand = Random.nextInt(4)
+                val rand = Random.nextInt(5)
                 date = when (rand) {
                     0 -> "2020-04-21"
                     1 -> "2020-03-11"

@@ -214,6 +214,16 @@ class DatabaseController : Controller() {
         }
     }
 
+    fun soldItemChange(saleModel: SaleModel, change: Int) {
+        saleModel.quantity.value += change
+        saleModel.markDirty(saleModel.quantity)
+    }
+
+    fun orderedItemChange(saleModel: SaleModel, change: Int) {
+        saleModel.quantity.value += change
+        saleModel.markDirty(saleModel.quantity)
+    }
+
 }
 
 class ForeignKeyViolation(s: String) : Throwable(s)

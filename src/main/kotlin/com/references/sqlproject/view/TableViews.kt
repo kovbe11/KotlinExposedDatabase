@@ -1,10 +1,9 @@
 package com.references.sqlproject.view
 
-import com.references.sqlproject.model.ItemModel
-import com.references.sqlproject.model.OrderModel
-import com.references.sqlproject.model.SaleModel
-import com.references.sqlproject.model.ShopModel
+import com.references.sqlproject.controller.DatabaseController
+import com.references.sqlproject.model.*
 import javafx.collections.ObservableList
+import javafx.event.EventHandler
 import javafx.event.EventTarget
 import javafx.scene.control.SelectionMode
 import javafx.scene.control.TableView
@@ -24,8 +23,6 @@ fun EventTarget.itemview(items: ObservableList<ItemModel>, op: TableView<ItemMod
         enableDirtyTracking()
         selectionModel.selectionMode = SelectionMode.MULTIPLE
         selectOnDrag()
-
-
 
         op()
     }
@@ -57,7 +54,7 @@ fun EventTarget.orderview(items: ObservableList<OrderModel>, op: TableView<Order
     return tableview(items) {
 
         column("#", OrderModel::id).contentWidth(useAsMin = true, useAsMax = false)
-        column("itemId", OrderModel::idOfItem).makeEditable().contentWidth(useAsMin = true, useAsMax = true)
+        column("itemId", OrderModel::idOfItem).makeEditable().contentWidth(useAsMin = true, useAsMax = false)
         readonlyColumn("itemName", OrderModel::itemName).weightedWidth(1)
         column("netPrice", OrderModel::netPrice).makeEditable().weightedWidth(0.5)
         column("date", OrderModel::date).makeEditable().fixedWidth(120)
@@ -73,7 +70,7 @@ fun EventTarget.orderview(items: ObservableList<OrderModel>, op: TableView<Order
 
 }
 
-fun EventTarget.saleview(items: ObservableList<SaleModel>, op: TableView<SaleModel>.() -> Unit = {}) {
+fun EventTarget.saleview(items: ObservableList<SaleModel>, controller: DatabaseController, op: TableView<SaleModel>.() -> Unit = {}) {
 
     tableview(items) {
 
@@ -82,9 +79,15 @@ fun EventTarget.saleview(items: ObservableList<SaleModel>, op: TableView<SaleMod
         readonlyColumn("itemName", SaleModel::itemName).weightedWidth(1.0)
         column("buyerId", SaleModel::buyerId).makeEditable().contentWidth(useAsMin = true, useAsMax = false)
         readonlyColumn("shop name", SaleModel::shopName).weightedWidth(1.0)
-        column("date", SaleModel::date).makeEditable().fixedWidth(120)
+        column("date", SaleModel::date).cellFragment(fragment = DateEditor::class).fixedWidth(120)
         column("selling price", SaleModel::sPrice).makeEditable().weightedWidth(0.5)
-        column("quantity", SaleModel::quantity).makeEditable().weightedWidth(0.5)
+        val quantityCol = column("quantity", SaleModel::quantity).makeEditable().weightedWidth(0.5)
+
+        val defEditCommit = quantityCol.onEditCommit
+        quantityCol.onEditCommit = EventHandler {
+            defEditCommit.handle(it)
+            controller.soldItemChange(it.rowValue, it.newValue - it.oldValue)
+        }
 
         smartResize()
         enableDirtyTracking()
@@ -92,6 +95,38 @@ fun EventTarget.saleview(items: ObservableList<SaleModel>, op: TableView<SaleMod
         selectOnDrag()
 
         op()
+    }
+
+}
+
+private val dateFormat = Regex("^((19|2[0-9])[0-9]{2})-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])\$")
+
+class DateEditor : TableCellFragment<Sale, String>() {
+    val model = SaleModel().bindToRowItem(this)
+
+
+    override val root = stackpane {
+        textfield(model.date) {
+            removeWhen(editingProperty.not())
+            validator {
+                if (model.date.value.matches(dateFormat)) null else error("Invalid number")
+            }
+            // Call cell.commitEdit() only if validation passes
+            action {
+                if (model.commit()) {
+                    cell?.commitEdit(model.date.value)
+                }
+            }
+        }
+        // Label is visible when not in edit mode, and always shows committed value (itemProperty)
+        label(itemProperty) {
+            removeWhen(editingProperty)
+        }
+    }
+
+    // Make sure we rollback our model to avoid showing the last failed edit
+    override fun startEdit() {
+        model.rollback()
     }
 
 }
